@@ -59,20 +59,34 @@ The hotkey can be changed from OBS Studio's Hotkeys settings.
 
 ## Installation
 
-Punch Streamer v0.1.0 currently targets:
+### Easy installation
+
+Punch Streamer v0.1.0 currently supports:
 
 - Windows x64
 - OBS Studio 32+
 
-Copy the packaged plugin files into your OBS Studio installation directory, preserving the included folder structure.
+1. Install OBS Studio normally.
+2. Close OBS Studio if it is running.
+3. Open the Punch Streamer GitHub Releases page.
+4. Download `PunchStreamer-0.1.0-windows-x64.zip`.
+5. Open the ZIP. Inside you will see two folders: `obs-plugins` and `data`.
+6. Copy both folders into your OBS Studio installation folder.
 
-Restart OBS Studio after installation.
+For a standard OBS installation, that folder is usually:
 
-Then open:
+`C:\Program Files\obs-studio\`
 
-`Tools -> Punch Streamer`
+Allow Windows to merge the folders if prompted.
 
-and select your camera source.
+7. Start OBS Studio.
+8. If you do not have a camera yet, add one with `Sources -> + -> Video Capture Device`.
+9. Open `Tools -> Punch Streamer`.
+10. Select your camera source.
+11. Keep the **Recommended** preset for the original effect.
+12. Configure the trigger in `Settings -> Hotkeys -> Punch Streamer`.
+
+You are ready to JAPISH.
 
 ## Building
 
@@ -97,3 +111,5 @@ Third-party components and assets may retain their respective licenses or owners
 Developed, compiled and maintained by **ProfePikashu**.
 
 Powered by OBS Studio, OpenCV and YuNet.
+
+
