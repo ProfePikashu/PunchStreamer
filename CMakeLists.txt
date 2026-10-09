@@ -4,7 +4,7 @@ include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/common/bootstrap.cmake" NO_POLICY_SCO
 
 project(${_name} VERSION ${_version})
 
-option(ENABLE_FRONTEND_API "Use obs-frontend-api for UI functionality" OFF)
+option(ENABLE_FRONTEND_API "Use obs-frontend-api for UI functionality" ON)
 option(ENABLE_QT "Use Qt functionality" OFF)
 
 include(compilerconfig)
@@ -14,6 +14,12 @@ include(helpers)
 add_library(${CMAKE_PROJECT_NAME} MODULE)
 
 find_package(libobs REQUIRED)
+set(OpenCV_DIR "${CMAKE_CURRENT_SOURCE_DIR}/third_party/opencv/opencv/build/x64/vc16/lib")
+find_package(OpenCV 4.14 REQUIRED)
+
+target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${OpenCV_INCLUDE_DIRS})
+target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE ${OpenCV_LIBS})
+
 target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE OBS::libobs)
 
 if(ENABLE_FRONTEND_API)
@@ -34,6 +40,55 @@ if(ENABLE_QT)
   )
 endif()
 
-target_sources(${CMAKE_PROJECT_NAME} PRIVATE src/plugin-main.c)
+target_sources(
+  ${CMAKE_PROJECT_NAME}
+  PRIVATE
+    src/plugin-main.cpp
+    src/punch-settings.cpp
+)
 
 set_target_properties_plugin(${CMAKE_PROJECT_NAME} PROPERTIES OUTPUT_NAME ${_name})
+
+
+
+
+include(CTest)
+
+if(BUILD_TESTING)
+  add_executable(
+    punch-settings-tests
+    tests/punch-settings-tests.cpp
+    src/punch-settings.cpp
+  )
+
+  target_include_directories(
+    punch-settings-tests
+    PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/src"
+  )
+
+  target_link_libraries(
+    punch-settings-tests
+    PRIVATE OBS::libobs
+  )
+
+  add_test(
+    NAME punch-settings-tests
+    COMMAND punch-settings-tests
+  )
+endif()
+
+
+if(ENABLE_QT)
+  target_sources(
+    ${CMAKE_PROJECT_NAME}
+    PRIVATE
+      src/punch-settings-dialog.cpp
+      src/punch-settings-dialog.hpp
+  )
+
+  target_compile_definitions(
+    ${CMAKE_PROJECT_NAME}
+    PRIVATE
+      ENABLE_QT
+  )
+endif()

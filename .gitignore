@@ -24,3 +24,12 @@
 
 # Exclude CMake build number cache
 /cmake/.CMakeBuildNumber
+
+# Include project tests
+!/tests
+
+# Exclude development backups
+*.bak
+*.bak.*
+
+!THIRD_PARTY_NOTICES.md

@@ -1,59 +1,99 @@
-# OBS Plugin Template
+﻿# Punch Streamer
 
-## Introduction
+**Punch Streamer** is an OBS Studio plugin that adds a configurable animated punch effect to your camera source.
 
-The plugin template is meant to be used as a starting point for OBS Studio plugin development. It includes:
+It tracks the face, positions the impact automatically, applies a directional distortion effect and plays the JAPISH impact sound.
 
-* Boilerplate plugin source code
-* A CMake project file
-* GitHub Actions workflows and repository actions
+**Compiled and maintained by ProfePikashu.**
 
-## Supported Build Environments
+## Features
 
-| Platform  | Tool   |
-|-----------|--------|
-| Windows   | Visual Studio 17 2022 |
-| macOS     | XCode 16.0 |
-| Windows, macOS  | CMake 3.30.5 |
-| Ubuntu 24.04 | CMake 3.28.3 |
-| Ubuntu 24.04 | `ninja-build` |
-| Ubuntu 24.04 | `pkg-config`
-| Ubuntu 24.04 | `build-essential` |
+- Face tracking using YuNet
+- Automatic punch positioning
+- Animated punch overlay
+- Directional face distortion
+- JAPISH impact sound
+- Live configuration from OBS
+- Per-profile settings
+- Configurable camera source
+- Customizable punch size and position
+- Configurable punch speed
+- Adjustable detection confidence
+- Adjustable distortion force and direction
+- Adjustable impact volume
+- Built-in presets
 
-## Quick Start
+## Presets
 
-An absolute bare-bones [Quick Start Guide](https://github.com/obsproject/obs-plugintemplate/wiki/Quick-Start-Guide) is available in the wiki.
+### Recommended
+The original Punch Streamer experience.
 
-## Documentation
+### Subtle
+A softer punch with reduced distortion.
 
-All documentation can be found in the [Plugin Template Wiki](https://github.com/obsproject/obs-plugintemplate/wiki).
+### Cartoon
+A larger and more exaggerated impact.
 
-Suggested reading to get up and running:
+### Custom
+Create your own configuration.
 
-* [Getting started](https://github.com/obsproject/obs-plugintemplate/wiki/Getting-Started)
-* [Build system requirements](https://github.com/obsproject/obs-plugintemplate/wiki/Build-System-Requirements)
-* [Build system options](https://github.com/obsproject/obs-plugintemplate/wiki/CMake-Build-System-Options)
+## Configuration
 
-## GitHub Actions & CI
+Open:
 
-Default GitHub Actions workflows are available for the following repository actions:
+`Tools -> Punch Streamer`
 
-* `push`: Run for commits or tags pushed to `master` or `main` branches.
-* `pr-pull`: Run when a Pull Request has been pushed or synchronized.
-* `dispatch`: Run when triggered by the workflow dispatch in GitHub's user interface.
-* `build-project`: Builds the actual project and is triggered by other workflows.
-* `check-format`: Checks CMake and plugin source code formatting and is triggered by other workflows.
+Changes are applied live.
 
-The workflows make use of GitHub repository actions (contained in `.github/actions`) and build scripts (contained in `.github/scripts`) which are not needed for local development, but might need to be adjusted if additional/different steps are required to build the plugin.
+Use **Test JAPISH** to preview the effect.
 
-### Retrieving build artifacts
+## Hotkey
 
-Successful builds on GitHub Actions will produce build artifacts that can be downloaded for testing. These artifacts are commonly simple archives and will not contain package installers or installation programs.
+Punch Streamer supports an OBS frontend hotkey.
 
-### Building a Release
+The development/default configuration uses:
 
-To create a release, an appropriately named tag needs to be pushed to the `main`/`master` branch using semantic versioning (e.g., `12.3.4`, `23.4.5-beta2`). A draft release will be created on the associated repository with generated installer packages or installation programs attached as release artifacts.
+`Ctrl + Alt + J`
 
-## Signing and Notarizing on macOS
+The hotkey can be changed from OBS Studio's Hotkeys settings.
 
-Basic concepts of codesigning and notarization on macOS are explained in the correspodning [Wiki article](https://github.com/obsproject/obs-plugintemplate/wiki/Codesigning-On-macOS) which has a specific section for the [GitHub Actions setup](https://github.com/obsproject/obs-plugintemplate/wiki/Codesigning-On-macOS#setting-up-code-signing-for-github-actions).
+## Installation
+
+Punch Streamer v0.1.0 currently targets:
+
+- Windows x64
+- OBS Studio 32+
+
+Copy the packaged plugin files into your OBS Studio installation directory, preserving the included folder structure.
+
+Restart OBS Studio after installation.
+
+Then open:
+
+`Tools -> Punch Streamer`
+
+and select your camera source.
+
+## Building
+
+Punch Streamer is based on the official OBS Plugin Template and uses CMake.
+
+The current Windows development environment uses:
+
+- Visual Studio 2022
+- CMake
+- Qt 6
+- OpenCV
+- OBS Studio frontend API
+
+## License
+
+The Punch Streamer source code is distributed under the GNU General Public License v2.
+
+Third-party components and assets may retain their respective licenses or ownership.
+
+## Credits
+
+Developed, compiled and maintained by **ProfePikashu**.
+
+Powered by OBS Studio, OpenCV and YuNet.

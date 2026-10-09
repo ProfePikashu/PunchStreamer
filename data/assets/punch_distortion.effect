@@ -1,0 +1,112 @@
+uniform float4x4 ViewProj;
+uniform texture2d image;
+
+uniform float Golpe = 0.0;
+uniform float Centro_X = 0.5;
+uniform float Centro_Y = 0.5;
+uniform float Radio = 0.80;
+
+uniform float Reach_Left = 1.0;
+uniform float Reach_Right = 1.0;
+uniform float Reach_Up = 1.0;
+uniform float Reach_Down = 1.0;
+
+sampler_state textureSampler
+{
+    Filter = Linear;
+    AddressU = Clamp;
+    AddressV = Clamp;
+};
+
+struct VertData
+{
+    float4 pos : POSITION;
+    float2 uv  : TEXCOORD0;
+};
+
+VertData VSDefault(VertData v_in)
+{
+    VertData vert_out;
+    vert_out.pos = mul(float4(v_in.pos.xyz, 1.0), ViewProj);
+    vert_out.uv = v_in.uv;
+    return vert_out;
+}
+
+float4 PSJapish(VertData v_in) : TARGET
+{
+    float2 uv = v_in.uv;
+    float2 center = float2(Centro_X, Centro_Y);
+    float2 delta = uv - center;
+
+    float radiusX = Radio * 0.070;
+    float radiusY = Radio * 0.14;
+
+    float reachX =
+        delta.x < 0.0 ?
+        Reach_Left :
+        Reach_Right;
+
+    float reachY =
+        delta.y < 0.0 ?
+        Reach_Up :
+        Reach_Down;
+
+    float2 oval = float2(
+        delta.x / (radiusX * reachX),
+        delta.y / (radiusY * reachY)
+    );
+
+    float dist = length(oval);
+
+    float falloff = saturate(1.0 - dist);
+    falloff =
+        falloff * falloff *
+        (3.0 - 2.0 * falloff);
+
+    float behindMask =
+        smoothstep(
+            -radiusX * 0.10,
+             radiusX * 0.18,
+             delta.x
+        );
+
+    float pushRight =
+        Golpe *
+        0.085 *
+        falloff *
+        behindMask;
+
+    float crush =
+        Golpe *
+        0.16 *
+        falloff *
+        behindMask;
+
+    uv.x -= pushRight;
+
+    uv.x -=
+        max(delta.x, 0.0) *
+        crush;
+
+    uv.y +=
+        delta.y *
+        Golpe *
+        0.035 *
+        falloff *
+        behindMask;
+
+    return image.Sample(
+        textureSampler,
+        uv
+    );
+}
+
+technique Draw
+{
+    pass
+    {
+        vertex_shader = VSDefault(v_in);
+        pixel_shader = PSJapish(v_in);
+    }
+}
+
