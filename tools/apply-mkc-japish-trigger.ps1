@@ -2,7 +2,9 @@ $ErrorActionPreference = 'Stop'
 
 $pluginPath = Join-Path $PSScriptRoot '..\src\plugin-main.cpp'
 $pluginPath = [System.IO.Path]::GetFullPath($pluginPath)
-$text = [System.IO.File]::ReadAllText($pluginPath)
+$rawText = [System.IO.File]::ReadAllText($pluginPath)
+$useCrLf = $rawText.Contains("`r`n")
+$text = $rawText.Replace("`r`n", "`n")
 
 function Replace-Required([string]$name, [string]$old, [string]$new) {
     if (-not $script:text.Contains($old)) {
@@ -13,8 +15,8 @@ function Replace-Required([string]$name, [string]$old, [string]$new) {
 }
 
 Replace-Required 'Windows include' `
-    "#include <cstring>`r`n" `
-    "#include <cstring>`r`n`r`n#ifdef _WIN32`r`n#include <windows.h>`r`n#endif`r`n"
+    "#include <cstring>`n" `
+    "#include <cstring>`n`n#ifdef _WIN32`n#include <windows.h>`n#endif`n"
 
 $eventBlock = @'
 static void release_camera_distortion(void);
@@ -81,27 +83,28 @@ static void release_japish_remote_event(void)
 #endif
 }
 '@
-$eventBlock = $eventBlock -replace "`n", "`r`n"
 
 Replace-Required 'Named Event bridge' `
-    "static void release_camera_distortion(void);`r`n" `
-    ($eventBlock + "`r`n")
+    "static void release_camera_distortion(void);`n" `
+    ($eventBlock + "`n")
 
 Replace-Required 'poll event on OBS tick' `
-    "        (void)data;`r`n`r`n        process_capture_probe();" `
-    "        (void)data;`r`n`r`n        poll_japish_remote_event();`r`n        process_capture_probe();"
+    "        (void)data;`n`n        process_capture_probe();" `
+    "        (void)data;`n`n        poll_japish_remote_event();`n        process_capture_probe();"
 
 Replace-Required 'create event on module load' `
-    "        obs_log(LOG_INFO, \"OpenCV runtime: %s\", cv::getVersionString().c_str());`r`n`r`n        load_runtime_settings_from_profile();" `
-    "        obs_log(LOG_INFO, \"OpenCV runtime: %s\", cv::getVersionString().c_str());`r`n`r`n        ensure_japish_remote_event();`r`n        load_runtime_settings_from_profile();"
+    "        obs_log(LOG_INFO, \"OpenCV runtime: %s\", cv::getVersionString().c_str());`n`n        load_runtime_settings_from_profile();" `
+    "        obs_log(LOG_INFO, \"OpenCV runtime: %s\", cv::getVersionString().c_str());`n`n        ensure_japish_remote_event();`n        load_runtime_settings_from_profile();"
 
 Replace-Required 'close event on module unload' `
-    "        release_japish_audio();`r`n`r`n        if (active_punch_item)" `
-    "        release_japish_audio();`r`n        release_japish_remote_event();`r`n`r`n        if (active_punch_item)"
+    "        release_japish_audio();`n`n        if (active_punch_item)" `
+    "        release_japish_audio();`n        release_japish_remote_event();`n`n        if (active_punch_item)"
+
+$output = if ($useCrLf) { $text.Replace("`n", "`r`n") } else { $text }
 
 [System.IO.File]::WriteAllText(
     $pluginPath,
-    $text,
+    $output,
     [System.Text.UTF8Encoding]::new($false))
 
 Write-Host 'MKC JAPISH trigger patch applied successfully.'
