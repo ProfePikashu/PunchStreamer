@@ -6,31 +6,19 @@ $rawText = [System.IO.File]::ReadAllText($pluginPath)
 $useCrLf = $rawText.Contains("`r`n")
 $text = $rawText.Replace("`r`n", "`n")
 
-function Replace-Required([string]$name, [string]$old, [string]$new) {
-    if (-not $script:text.Contains($old)) {
-        throw "JAPISH plugin patch stopped: expected block not found: $name"
-    }
-    $script:text = $script:text.Replace($old, $new)
-    Write-Host "OK  $name"
-}
-
-function Replace-RegexRequired([string]$name, [string]$pattern, [string]$replacement) {
+function Replace-One([string]$name, [string]$inputText, [string]$pattern, [string]$replacement) {
     $regex = [System.Text.RegularExpressions.Regex]::new(
         $pattern,
         [System.Text.RegularExpressions.RegexOptions]::Singleline)
 
-    $matches = $regex.Matches($script:text)
+    $matches = $regex.Matches($inputText)
     if ($matches.Count -ne 1) {
-        throw "JAPISH plugin patch stopped: regex block '$name' matched $($matches.Count) times"
+        throw "JAPISH plugin patch stopped: '$name' matched $($matches.Count) times"
     }
 
-    $script:text = $regex.Replace($script:text, $replacement, 1)
     Write-Host "OK  $name"
+    return $regex.Replace($inputText, $replacement, 1)
 }
-
-Replace-Required 'Windows include' `
-    "#include <cstring>`n" `
-    "#include <cstring>`n`n#ifdef _WIN32`n#include <windows.h>`n#endif`n"
 
 $eventBlock = @'
 static void release_camera_distortion(void);
@@ -98,23 +86,39 @@ static void release_japish_remote_event(void)
 }
 '@
 
-Replace-Required 'Named Event bridge' `
-    "static void release_camera_distortion(void);`n" `
+$next = $text
+
+$next = Replace-One `
+    'Windows include' `
+    $next `
+    '(#include\s*<cstring>\s*\n)' `
+    ('$1' + "`n#ifdef _WIN32`n#include <windows.h>`n#endif`n")
+
+$next = Replace-One `
+    'Named Event bridge' `
+    $next `
+    'static\s+void\s+release_camera_distortion\s*\(\s*void\s*\)\s*;\s*\n' `
     ($eventBlock + "`n")
 
-Replace-Required 'poll event on OBS tick' `
-    "        (void)data;`n`n        process_capture_probe();" `
-    "        (void)data;`n`n        poll_japish_remote_event();`n        process_capture_probe();"
+$next = Replace-One `
+    'poll event on OBS tick' `
+    $next `
+    '(static\s+void\s+punch_tick\s*\([^)]*\)\s*\{\s*\(void\)data\s*;)' `
+    ('$1' + "`n`n        poll_japish_remote_event();")
 
-Replace-RegexRequired 'create event on module load' `
-    '(bool\s+obs_module_load\s*\(\s*void\s*\)\s*\{\s*obs_log\s*\(\s*LOG_INFO\s*,\s*"plugin loaded successfully \(version %s\)"\s*,\s*PLUGIN_VERSION\s*\)\s*;\s*obs_log\s*\(\s*LOG_INFO\s*,\s*"OpenCV runtime: %s"\s*,\s*cv::getVersionString\(\)\.c_str\(\)\s*\)\s*;)' `
-    ('$1' + "`n`n        ensure_japish_remote_event();")
+$next = Replace-One `
+    'create event on module load' `
+    $next `
+    '(bool\s+obs_module_load\s*\(\s*void\s*\)\s*\{)' `
+    ('$1' + "`n        ensure_japish_remote_event();")
 
-Replace-RegexRequired 'close event on module unload' `
-    '(release_japish_audio\s*\(\s*\)\s*;)(\s*)(if\s*\(\s*active_punch_item\s*\))' `
-    ('$1' + "`n        release_japish_remote_event();`n`n        " + '$3')
+$next = Replace-One `
+    'close event on module unload' `
+    $next `
+    '(void\s+obs_module_unload\s*\(\s*void\s*\)\s*\{)' `
+    ('$1' + "`n        release_japish_remote_event();")
 
-$output = if ($useCrLf) { $text.Replace("`n", "`r`n") } else { $text }
+$output = if ($useCrLf) { $next.Replace("`n", "`r`n") } else { $next }
 
 [System.IO.File]::WriteAllText(
     $pluginPath,
