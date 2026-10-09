@@ -14,6 +14,20 @@ function Replace-Required([string]$name, [string]$old, [string]$new) {
     Write-Host "OK  $name"
 }
 
+function Replace-RegexRequired([string]$name, [string]$pattern, [string]$replacement) {
+    $regex = [System.Text.RegularExpressions.Regex]::new(
+        $pattern,
+        [System.Text.RegularExpressions.RegexOptions]::Singleline)
+
+    $matches = $regex.Matches($script:text)
+    if ($matches.Count -ne 1) {
+        throw "JAPISH plugin patch stopped: regex block '$name' matched $($matches.Count) times"
+    }
+
+    $script:text = $regex.Replace($script:text, $replacement, 1)
+    Write-Host "OK  $name"
+}
+
 Replace-Required 'Windows include' `
     "#include <cstring>`n" `
     "#include <cstring>`n`n#ifdef _WIN32`n#include <windows.h>`n#endif`n"
@@ -92,13 +106,13 @@ Replace-Required 'poll event on OBS tick' `
     "        (void)data;`n`n        process_capture_probe();" `
     "        (void)data;`n`n        poll_japish_remote_event();`n        process_capture_probe();"
 
-Replace-Required 'create event on module load' `
-    "        obs_log(LOG_INFO, \"OpenCV runtime: %s\", cv::getVersionString().c_str());`n`n        load_runtime_settings_from_profile();" `
-    "        obs_log(LOG_INFO, \"OpenCV runtime: %s\", cv::getVersionString().c_str());`n`n        ensure_japish_remote_event();`n        load_runtime_settings_from_profile();"
+Replace-RegexRequired 'create event on module load' `
+    '(bool\s+obs_module_load\s*\(\s*void\s*\)\s*\{\s*obs_log\s*\(\s*LOG_INFO\s*,\s*"plugin loaded successfully \(version %s\)"\s*,\s*PLUGIN_VERSION\s*\)\s*;\s*obs_log\s*\(\s*LOG_INFO\s*,\s*"OpenCV runtime: %s"\s*,\s*cv::getVersionString\(\)\.c_str\(\)\s*\)\s*;)' `
+    ('$1' + "`n`n        ensure_japish_remote_event();")
 
-Replace-Required 'close event on module unload' `
-    "        release_japish_audio();`n`n        if (active_punch_item)" `
-    "        release_japish_audio();`n        release_japish_remote_event();`n`n        if (active_punch_item)"
+Replace-RegexRequired 'close event on module unload' `
+    '(release_japish_audio\s*\(\s*\)\s*;)(\s*)(if\s*\(\s*active_punch_item\s*\))' `
+    ('$1' + "`n        release_japish_remote_event();`n`n        " + '$3')
 
 $output = if ($useCrLf) { $text.Replace("`n", "`r`n") } else { $text }
 
